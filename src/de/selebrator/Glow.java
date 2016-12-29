@@ -1,10 +1,10 @@
 package de.selebrator;
 
 import com.google.common.collect.Lists;
-import de.selebrator.reflection.Reflection;
-import net.minecraft.server.v1_11_R1.PacketPlayOutScoreboardTeam;
+import de.selebrator.fetcher.PacketFetcher;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class Glow {
@@ -12,61 +12,19 @@ public class Glow {
 	public static String TEAM_TAG_VISIBILITY = "always";
 	public static String COLLISION_RULE = "never";
 
-	public static PacketPlayOutScoreboardTeam createTeam(GlowingColor color) {
-		PacketPlayOutScoreboardTeam packet = new PacketPlayOutScoreboardTeam();
-		Reflection.getField(packet.getClass(), "a").set(packet, color.teamName); //Team name
-		Reflection.getField(packet.getClass(), "b").set(packet, color.teamName); //Team displayName
-		Reflection.getField(packet.getClass(), "c").set(packet, "§" + color.colorCode); //Team prefix
-		Reflection.getField(packet.getClass(), "d").set(packet, ""); //Team suffix
-		Reflection.getField(packet.getClass(), "e").set(packet, TEAM_TAG_VISIBILITY); //Team nameTagVisibility (EnumNameTagVisibility.e)
-		Reflection.getField(packet.getClass(), "f").set(packet, COLLISION_RULE); //Team collisionRule (EnumTeamPush.e)
-		Reflection.getField(packet.getClass(), "g").set(packet, color.id); //Team color (EnumChatFormat.C)
-		Reflection.getField(packet.getClass(), "h").set(packet, Lists.newArrayList());
-		Reflection.getField(packet.getClass(), "i").set(packet, 0); //Mode (0 = create team; 1 = remove team; 2 = update info; 3 = add players; remove players
-		Reflection.getField(packet.getClass(), "j").set(packet, 0); //not sure what this does :/
-
-		return packet;
+	public static void createTeam(Player observer, GlowingColor color) {
+		PacketFetcher.sendPackets(observer, PacketFetcher.scoreboardTeam(color, TEAM_TAG_VISIBILITY, COLLISION_RULE, new ArrayList<>(), ScoreboardTeamOperation.CREATE_TEAM));
 	}
 
-	public static PacketPlayOutScoreboardTeam add(GlowingColor color, String entityReference) { //entityReference = name for players and uuid for entities
-		Collection<String> modifiedEnities = Lists.newArrayList();
-		modifiedEnities.add(entityReference);
-		PacketPlayOutScoreboardTeam packet = new PacketPlayOutScoreboardTeam();
-		Reflection.getField(packet.getClass(), "a").set(packet, color.teamName); //Team name
-		Reflection.getField(packet.getClass(), "b").set(packet, color.teamName); //Team displayName
-		Reflection.getField(packet.getClass(), "c").set(packet, "§" + color.colorCode); //Team prefix
-		Reflection.getField(packet.getClass(), "d").set(packet, ""); //Team suffix
-		Reflection.getField(packet.getClass(), "e").set(packet, TEAM_TAG_VISIBILITY); //Team nameTagVisibility (EnumNameTagVisibility.e)
-		Reflection.getField(packet.getClass(), "f").set(packet, COLLISION_RULE); //Team collisionRule (EnumTeamPush.e)
-		Reflection.getField(packet.getClass(), "g").set(packet, color.id); //Team color (EnumChatFormat.C)
-		Reflection.getField(packet.getClass(), "h").set(packet, modifiedEnities);
-		Reflection.getField(packet.getClass(), "i").set(packet, 3); //Mode (0 = create team; 1 = remove team; 2 = update info; 3 = add players; remove players
-		Reflection.getField(packet.getClass(), "j").set(packet, 0); //not sure what this does :/
-
-		return packet;
+	public static void addTeamMember(Player observer, GlowingColor color, String entityReference) { //entityReference = name for players and uuid for entities
+		Collection<String> modifiedEntities = Lists.newArrayList();
+		modifiedEntities.add(entityReference);
+		PacketFetcher.sendPackets(observer, PacketFetcher.scoreboardTeam(color, TEAM_TAG_VISIBILITY, COLLISION_RULE, modifiedEntities, ScoreboardTeamOperation.ADD_PLAYERS));
 	}
 
-	public static PacketPlayOutScoreboardTeam remove(GlowingColor color, String entityReference) { //entityReference = name for players and uuid for entities
-		Collection<String> modifiedEnities = Lists.newArrayList();
-		modifiedEnities.add(entityReference);
-		PacketPlayOutScoreboardTeam packet = new PacketPlayOutScoreboardTeam();
-		Reflection.getField(packet.getClass(), "a").set(packet, color.teamName); //Team name
-		Reflection.getField(packet.getClass(), "b").set(packet, color.teamName); //Team displayName
-		Reflection.getField(packet.getClass(), "c").set(packet, "§" + color.colorCode); //Team prefix
-		Reflection.getField(packet.getClass(), "d").set(packet, ""); //Team suffix
-		Reflection.getField(packet.getClass(), "e").set(packet, TEAM_TAG_VISIBILITY); //Team nameTagVisibility (EnumNameTagVisibility.e)
-		Reflection.getField(packet.getClass(), "f").set(packet, COLLISION_RULE); //Team collisionRule (EnumTeamPush.e)
-		Reflection.getField(packet.getClass(), "g").set(packet, color.id); //Team color (EnumChatFormat.C)
-		Reflection.getField(packet.getClass(), "h").set(packet, modifiedEnities);
-		Reflection.getField(packet.getClass(), "i").set(packet, 4); //Mode (0 = create team; 1 = remove team; 2 = update info; 3 = add players; remove players
-		Reflection.getField(packet.getClass(), "j").set(packet, 0); //not sure what this does :/
-
-		return packet;
-	}
-
-	public static void initTeams(Player receiver) {
+	public static void initTeams(Player observer) {
 		for(GlowingColor color : GlowingColor.values()) {
-			FakeShulker.sendPackets(receiver, createTeam(color));
+			createTeam(observer, color);
 		}
 	}
 
@@ -97,6 +55,18 @@ public class Glow {
 			this.id = id;
 			this.colorCode = colorCode;
 			this.teamName = "GLOWING_" + this.id;
+		}
+	}
+
+	public enum ScoreboardTeamOperation {
+		//0 = create team; 1 = remove team; 2 = update info; 3 = add players; remove players
+		CREATE_TEAM(0),
+		ADD_PLAYERS(3);
+
+		public int id;
+
+		ScoreboardTeamOperation(int id) {
+			this.id = id;
 		}
 	}
 }

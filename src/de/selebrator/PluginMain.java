@@ -1,6 +1,7 @@
 package de.selebrator;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
@@ -56,7 +57,7 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 			if(sender instanceof Player)
 				player = (Player) sender;
 			else if(sender instanceof ConsoleCommandSender) {
-				sender.sendMessage("§c/ore is not supported by the console");
+				sender.sendMessage("You must specify which player you wish to perform this action on");
 				return true;
 			} else {
 				sender.sendMessage("§c/ore is not supported by this CommandSender");
@@ -95,19 +96,12 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 
 	private void doSpelunking(Player player, int range) {
 		this.initPlayer(player);
-		List<FakeShulker> shulkers = this.players.get(player);
 		Block playerBlock = player.getLocation().getBlock();
 		for(int x = -range; x < range; x++) {
 			for(int y = -range; y < range; y++) {
 				for(int z = -range; z < range; z++) {
 					Block block = playerBlock.getRelative(x, y, z);
-					Material blockType = block.getType();
-					if(oreMap.containsKey(blockType))  {
-						FakeShulker shulker = new FakeShulker(block.getLocation());
-						shulker.spawn(player);
-						FakeShulker.sendPackets(player, Glow.add(oreMap.get(blockType), shulker.uuid.toString()));
-						shulkers.add(shulker);
-					}
+					addBlock(player, block.getLocation(), block.getType());
 				}
 			}
 		}
@@ -116,6 +110,17 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 	private void undoSpelunking(Player player) {
 		this.players.get(player).forEach(FakeShulker::despawn);
 		this.players.put(player, new ArrayList<>());
+	}
+
+	public boolean addBlock(Player player, Location location, Material blockType) {
+		if(oreMap.containsKey(blockType)) {
+			FakeShulker shulker = new FakeShulker();
+			shulker.spawn(player, location);
+			shulker.setGlowColor(oreMap.get(blockType));
+			this.players.get(player).add(shulker);
+			return true;
+		}
+		return false;
 	}
 
 	@EventHandler
