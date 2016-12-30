@@ -4,6 +4,7 @@ import de.selebrator.Glow;
 import de.selebrator.reflection.Reflection;
 import net.minecraft.server.v1_11_R1.DataWatcher;
 import net.minecraft.server.v1_11_R1.Packet;
+import net.minecraft.server.v1_11_R1.PacketPlayOutEntity;
 import net.minecraft.server.v1_11_R1.PacketPlayOutEntityDestroy;
 import net.minecraft.server.v1_11_R1.PacketPlayOutScoreboardTeam;
 import net.minecraft.server.v1_11_R1.PacketPlayOutSpawnEntityLiving;
@@ -40,6 +41,17 @@ public class PacketFetcher {
 		return packet;
 	}
 
+	public static PacketPlayOutEntity.PacketPlayOutRelEntityMove relEntityMove(int entityId, double x, double y, double z) {
+		PacketPlayOutEntity.PacketPlayOutRelEntityMove packet = new PacketPlayOutEntity.PacketPlayOutRelEntityMove();
+		Reflection.getField(packet.getClass().getSuperclass(), "a").set(packet, entityId);
+		Reflection.getField(packet.getClass().getSuperclass(), "b").set(packet, rel(x));
+		Reflection.getField(packet.getClass().getSuperclass(), "c").set(packet, rel(y));
+		Reflection.getField(packet.getClass().getSuperclass(), "d").set(packet, rel(z));
+		Reflection.getField(packet.getClass().getSuperclass(), "g").set(packet, true); //onGround
+		Reflection.getField(packet.getClass().getSuperclass(), "h").set(packet, true);
+		return packet;
+	}
+
 	public static PacketPlayOutScoreboardTeam scoreboardTeam(Glow.GlowingColor color, String nameTagVisibility, String collisionRule, Collection<String> members, Glow.ScoreboardTeamOperation mode) {
 		PacketPlayOutScoreboardTeam packet = new PacketPlayOutScoreboardTeam();
 		Reflection.getField(packet.getClass(), "a").set(packet, color.teamName); //Team name
@@ -60,5 +72,12 @@ public class PacketFetcher {
 		for(Packet<?> packet : packets) {
 			((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet);
 		}
+	}
+
+	/**
+	 * prepare relative coordinate for packet
+	 */
+	private static short rel(double value) {
+		return (short) (4096 * value);
 	}
 }
