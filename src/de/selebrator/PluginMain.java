@@ -27,6 +27,8 @@ import java.util.Map;
 
 public class PluginMain extends JavaPlugin implements Listener, CommandExecutor {
 
+	private static final String PERMISSION_PARENT = "ore.";
+
 	private static final Map<Material, Glow.GlowingColor> oreMap = new HashMap<>();
 	private Map<Player, List<FakeShulker>> players = new HashMap<>();
 
@@ -56,11 +58,14 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		Player player = null;
+		Player target = null;
 
 		if(args.length == 0) {
+			if(!checkPermission(sender, PERMISSION_PARENT + "self"))
+				return true;
+
 			if(sender instanceof Player)
-				player = (Player) sender;
+				target = (Player) sender;
 			else if(sender instanceof ConsoleCommandSender) {
 				sender.sendMessage("You must specify which player you wish to perform this action on");
 				return true;
@@ -69,8 +74,11 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 				return true;
 			}
 		} else if(args.length == 1) {
-			player = Bukkit.getPlayer(args[0]);
-			if(player == null) {
+			if(!checkPermission(sender, PERMISSION_PARENT + "other"))
+				return true;
+
+			target = Bukkit.getPlayer(args[0]);
+			if(target == null) {
 				sender.sendMessage("§cPlayer " + args[0].toLowerCase() + " not online");
 				return true;
 			}
@@ -78,16 +86,16 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 			return false;
 		}
 
-		if(player == null) {
+		if(target == null) {
 			sender.sendMessage("§cPlayer not found");
 			return true;
 		}
 
-		if(this.players.get(player).equals(new ArrayList<>())) {
-			doSpelunking(player, 16);
+		if(this.players.get(target).equals(new ArrayList<>())) {
+			doSpelunking(target, 16);
 			return true;
 		} else {
-			undoSpelunking(player);
+			undoSpelunking(target);
 			return  true;
 		}
 	}
@@ -117,7 +125,7 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 		this.players.put(player, new ArrayList<>());
 	}
 
-	public boolean addBlock(Player player, Location location, Material blockType) {
+	private boolean addBlock(Player player, Location location, Material blockType) {
 		if(oreMap.containsKey(blockType)) {
 			FakeShulker shulker = new FakeShulker();
 			shulker.spawn(player, location);
@@ -128,7 +136,7 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 		return false;
 	}
 
-	public boolean removeBlock(Player player, Location location) {
+	private boolean removeBlock(Player player, Location location) {
 		List<FakeShulker> shulkers = this.players.get(player);
 		for(FakeShulker shulker : shulkers) {
 			if(location.equals(shulker.location)) {
@@ -140,7 +148,7 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 		return false;
 	}
 
-	public boolean moveBlock(Player player, Location oldLocation, BlockFace direction, int distance) {
+	private boolean moveBlock(Player player, Location oldLocation, BlockFace direction, int distance) {
 		List<FakeShulker> shulkers = this.players.get(player);
 		for(FakeShulker shulker : shulkers) {
 			if(oldLocation.equals(shulker.location)) {
@@ -183,5 +191,19 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 		Location oldLocation = event.getBlock().getRelative(event.getDirection(), -2).getLocation();
 		if(event.isSticky())
 			Bukkit.getOnlinePlayers().forEach(player -> moveBlock(player, oldLocation, event.getDirection(), 1));
+	}
+
+
+	private static boolean checkPermission(CommandSender sender, String permission) {
+		return checkPermission(sender, permission, "§cYou don't have the permission to perform this command.");
+	}
+
+	private static boolean checkPermission(CommandSender sender, String permission, String message) {
+		if(sender.hasPermission(permission))
+			return true;
+		else {
+			sender.sendMessage(message);
+			return false;
+		}
 	}
 }
