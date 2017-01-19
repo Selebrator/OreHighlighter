@@ -1,27 +1,33 @@
 package de.selebrator.orehighlighter.metadata;
 
-import de.selebrator.orehighlighter.reflection.IMethodAccessor;
+import de.selebrator.orehighlighter.PluginMain;
+import de.selebrator.orehighlighter.reflection.ConstructorAccessor;
+import de.selebrator.orehighlighter.reflection.FieldAccessor;
+import de.selebrator.orehighlighter.reflection.MethodAccessor;
 import de.selebrator.orehighlighter.reflection.Reflection;
 import de.selebrator.orehighlighter.reflection.ServerPackage;
-import net.minecraft.server.v1_11_R1.DataWatcher;
 
 public class FakeMetadata {
 
-	private DataWatcher dataWatcher;
+	private Object dataWatcher;
 
 	private byte status;
 
-	private static final IMethodAccessor METHOD_DataWatcher_registerObject = Reflection.getMethod(DataWatcher.class, "registerObject", Reflection.getClass(ServerPackage.NMS, "DataWatcherObject"), Object.class);
+	private static final Class<?> CLASS_DataWatcher = Reflection.getMinecraftClass("DataWatcher");
+	private static final Class<?> CLASS_Entity = Reflection.getMinecraftClass("Entity");
+	private static final Class<?> CLASS_DataWatcherObject = Reflection.getMinecraftClass("DataWatcherObject");
+	private static final ConstructorAccessor CONSTRUCTOR_DataWatcher = Reflection.getConstructor(CLASS_DataWatcher, CLASS_Entity);
+	private static final MethodAccessor METHOD_DataWatcher_registerObject = Reflection.getMethod(CLASS_DataWatcher, null, "registerObject", CLASS_DataWatcherObject, Object.class);
 
 	public FakeMetadata() {
-		this.dataWatcher = new DataWatcher(null);
+		this.dataWatcher = CONSTRUCTOR_DataWatcher.newInstance(new Object[] { null });
 	}
 
 	public void set(DataWatcherObject dataWatcherObject, Object value) {
 		METHOD_DataWatcher_registerObject.invoke(this.dataWatcher, dataWatcherObject.getObject(), value);
 	}
 
-	public DataWatcher getDataWatcher() {
+	public Object getDataWatcher() {
 		return this.dataWatcher;
 	}
 
@@ -36,13 +42,19 @@ public class FakeMetadata {
 	}
 
 	public enum DataWatcherObject {
-		ENTITY_STATUS_BITMASK_00("Entity", "Z");
+		ENTITY_STATUS_BITMASK_00("Entity", "Z", 0);
 
 		private Object object;
 
-		DataWatcherObject(String parent, String field) {
-			Class<?> parentClazz = Reflection.getClass(ServerPackage.NMS, parent);
-			this.object = Reflection.getField(parentClazz, field).get(null);
+		DataWatcherObject(String parent, String fieldName, int index) {
+			Class<?> parentClazz = Reflection.getMinecraftClass(parent);
+			FieldAccessor field;
+			if(ServerPackage.getVersion().equals(PluginMain.VERSION))
+				field = Reflection.getField(parentClazz, fieldName);
+			else
+				field = Reflection.getField(parentClazz, CLASS_DataWatcherObject, index);
+
+			this.object = field.get(null);
 		}
 
 		public Object getObject() {

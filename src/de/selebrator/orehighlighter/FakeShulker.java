@@ -3,7 +3,6 @@ package de.selebrator.orehighlighter;
 import de.selebrator.orehighlighter.fetcher.PacketFetcher;
 import de.selebrator.orehighlighter.metadata.FakeMetadata;
 import de.selebrator.orehighlighter.reflection.Reflection;
-import de.selebrator.orehighlighter.reflection.ServerPackage;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -20,9 +19,9 @@ public class FakeShulker {
 	public FakeMetadata meta;
 
 	public FakeShulker() {
-		Class<?> entityClass = Reflection.getClass(ServerPackage.NMS, "Entity");
+		Class<?> entityClass = Reflection.getMinecraftClass("Entity");
 		this.entityId = (int) Reflection.getField(entityClass, "entityCount").get(null);
-		Reflection.getField(entityClass, "entityCount").set(null, this.entityId + 1);
+		Reflection.getField(entityClass, int.class, "entityCount").set(null, this.entityId + 1);
 
 		Random random = new Random();
 		long mostSigBits = random.nextLong() & 0xffffffffffff0fffL | 0x4000L;

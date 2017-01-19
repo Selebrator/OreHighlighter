@@ -28,6 +28,7 @@ import java.util.Map;
 public class PluginMain extends JavaPlugin implements Listener, CommandExecutor {
 
 	private static final String PERMISSION_PARENT = "ore.";
+	public static final String VERSION = "v1_11_R1";
 
 	private static final Map<Material, Glow.GlowingColor> oreMap = new HashMap<>();
 	private Map<Player, List<FakeShulker>> players = new HashMap<>();
