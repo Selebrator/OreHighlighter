@@ -1,5 +1,6 @@
 package de.selebrator.orehighlighter;
 
+import de.selebrator.orehighlighter.reflection.ServerPackage;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -47,6 +48,12 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 
 	@Override
 	public void onEnable() {
+		if(!ServerPackage.getVersion().equals(VERSION)) {
+			this.getLogger().warning("Server version: " + ServerPackage.getVersion() + ", Recommended version: " + VERSION);
+			//Bukkit.getPluginManager().disablePlugin(this);
+			//return;
+		}
+
 		Bukkit.getPluginManager().registerEvents(this, this);
 		getCommand("ore").setExecutor(this);
 		Bukkit.getOnlinePlayers().forEach(player -> this.players.put(player, new ArrayList<>()));
