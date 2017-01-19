@@ -1,7 +1,7 @@
-package de.selebrator;
+package de.selebrator.orehighlighter;
 
 import com.google.common.collect.Lists;
-import de.selebrator.fetcher.PacketFetcher;
+import de.selebrator.orehighlighter.fetcher.PacketFetcher;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;

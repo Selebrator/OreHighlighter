@@ -1,4 +1,4 @@
-package de.selebrator.reflection;
+package de.selebrator.orehighlighter.reflection;
 
 import org.bukkit.Bukkit;
 

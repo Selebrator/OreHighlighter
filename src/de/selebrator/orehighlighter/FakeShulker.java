@@ -1,9 +1,9 @@
-package de.selebrator;
+package de.selebrator.orehighlighter;
 
-import de.selebrator.fetcher.PacketFetcher;
-import de.selebrator.metadata.FakeMetadata;
-import de.selebrator.reflection.Reflection;
-import de.selebrator.reflection.ServerPackage;
+import de.selebrator.orehighlighter.fetcher.PacketFetcher;
+import de.selebrator.orehighlighter.metadata.FakeMetadata;
+import de.selebrator.orehighlighter.reflection.Reflection;
+import de.selebrator.orehighlighter.reflection.ServerPackage;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 

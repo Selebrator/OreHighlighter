@@ -1,8 +1,8 @@
-package de.selebrator.metadata;
+package de.selebrator.orehighlighter.metadata;
 
-import de.selebrator.reflection.IMethodAccessor;
-import de.selebrator.reflection.Reflection;
-import de.selebrator.reflection.ServerPackage;
+import de.selebrator.orehighlighter.reflection.IMethodAccessor;
+import de.selebrator.orehighlighter.reflection.Reflection;
+import de.selebrator.orehighlighter.reflection.ServerPackage;
 import net.minecraft.server.v1_11_R1.DataWatcher;
 
 public class FakeMetadata {

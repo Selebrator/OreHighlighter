@@ -1,7 +1,7 @@
-package de.selebrator.fetcher;
+package de.selebrator.orehighlighter.fetcher;
 
-import de.selebrator.Glow;
-import de.selebrator.reflection.Reflection;
+import de.selebrator.orehighlighter.Glow;
+import de.selebrator.orehighlighter.reflection.Reflection;
 import net.minecraft.server.v1_11_R1.DataWatcher;
 import net.minecraft.server.v1_11_R1.Packet;
 import net.minecraft.server.v1_11_R1.PacketPlayOutEntity;

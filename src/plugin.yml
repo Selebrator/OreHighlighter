@@ -1,5 +1,5 @@
 name: SpelunkingTool
-main: de.selebrator.PluginMain
+main: de.selebrator.orehighlighter.PluginMain
 version: 0.0.1
 authors: [Selebrator]
 commands:

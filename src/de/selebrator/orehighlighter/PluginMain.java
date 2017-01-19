@@ -1,4 +1,4 @@
-package de.selebrator;
+package de.selebrator.orehighlighter;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
