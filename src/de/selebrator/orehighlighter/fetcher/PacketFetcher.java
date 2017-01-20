@@ -16,7 +16,6 @@ import java.util.UUID;
 public class PacketFetcher {
 	//Minecraft classes
 	private static final Class<?> CLASS_PacketPlayOutEntityDestroy = Reflection.getMinecraftClass("PacketPlayOutEntityDestroy");
-	private static final Class<?> CLASS_PacketPlayOutRelEntityMove = Reflection.getMinecraftClass("PacketPlayOutEntity$PacketPlayOutRelEntityMove");
 	private static final Class<?> CLASS_PacketPlayOutSpawnEntityLiving = Reflection.getMinecraftClass("PacketPlayOutSpawnEntityLiving");
 	private static final Class<?> CLASS_PacketPlayOutScoreboardTeam = Reflection.getMinecraftClass("PacketPlayOutScoreboardTeam");
 	private static final Class<?> CLASS_EntityPlayer = Reflection.getMinecraftClass("EntityPlayer");
@@ -27,7 +26,6 @@ public class PacketFetcher {
 	private static final Class<?> CLASS_CraftPlayer = Reflection.getCraftBukkitClass("entity.CraftPlayer");
 
 	private static final ConstructorAccessor<Object> CONSTRUCTOR_PacketPlayOutEntityDestroy = Reflection.getConstructor(CLASS_PacketPlayOutEntityDestroy);
-	private static final ConstructorAccessor<Object> CONSTRUCTOR_PacketPlayOutRelEntityMove = Reflection.getConstructor(CLASS_PacketPlayOutRelEntityMove);
 	private static final ConstructorAccessor<Object> CONSTRUCTOR_PacketPlayOutSpawnEntityLiving = Reflection.getConstructor(CLASS_PacketPlayOutSpawnEntityLiving);
 	private static final ConstructorAccessor<Object> CONSTRUCTOR_PacketPlayOutScoreboardTeam = Reflection.getConstructor(CLASS_PacketPlayOutScoreboardTeam);
 
@@ -61,17 +59,6 @@ public class PacketFetcher {
 		return packet(CONSTRUCTOR_PacketPlayOutEntityDestroy, fields);
 	}
 
-	public static Object relEntityMove(int entityId, double x, double y, double z) {
-		Map<String, Object> fields = new HashMap<>();
-		fields.put("a", entityId);
-		fields.put("b", rel(x));
-		fields.put("c", rel(y));
-		fields.put("d", rel(z));
-		fields.put("g", true); //onGround
-		fields.put("h", true);
-		return packet(CONSTRUCTOR_PacketPlayOutRelEntityMove, fields);
-	}
-
 	public static Object scoreboardTeam(Glow.GlowingColor color, String nameTagVisibility, String collisionRule, Collection<String> members, Glow.ScoreboardTeamOperation mode) {
 		Map<String, Object> fields = new HashMap<>();
 		fields.put("a", color.teamName); //Team name
@@ -99,12 +86,5 @@ public class PacketFetcher {
 		for(Object packet : packets) {
 			METHOD_PlayerConnection_sendPacket.invoke(FIELD_EntityPlayer_playerConnection.get(METHOD_CraftPlayer_getHandle.invoke(player)), packet);
 		}
-	}
-
-	/**
-	 * prepare relative coordinate for packet
-	 */
-	private static short rel(double value) {
-		return (short) (4096 * value);
 	}
 }

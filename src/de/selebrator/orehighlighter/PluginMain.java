@@ -5,7 +5,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -156,19 +155,6 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 		return false;
 	}
 
-	private boolean moveBlock(Player player, Location oldLocation, BlockFace direction, int distance) {
-		List<FakeShulker> shulkers = this.players.get(player);
-		for(FakeShulker shulker : shulkers) {
-			if(oldLocation.equals(shulker.location)) {
-				shulkers.remove(shulker);
-				shulker.move(direction.getModX() * distance, direction.getModY() * distance, direction.getModZ() * distance);
-				shulkers.add(shulker);
-				return true;
-			}
-		}
-		return false;
-	}
-
 	@EventHandler
 	public void onJoin(PlayerJoinEvent event) {
 		this.initPlayer(event.getPlayer());
@@ -191,14 +177,13 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 
 	@EventHandler
 	public void onPistonPush(BlockPistonExtendEvent event) {
-		Bukkit.getOnlinePlayers().forEach(player -> event.getBlocks().forEach(block -> moveBlock(player, block.getLocation(), event.getDirection(), 1)));
+		Bukkit.getOnlinePlayers().forEach(player -> event.getBlocks().forEach(block -> removeBlock(player, block.getLocation())));
 	}
 
 	@EventHandler
 	public void onPistonPull(BlockPistonRetractEvent event) {
-		Location oldLocation = event.getBlock().getRelative(event.getDirection(), -2).getLocation();
 		if(event.isSticky())
-			Bukkit.getOnlinePlayers().forEach(player -> moveBlock(player, oldLocation, event.getDirection(), 1));
+			Bukkit.getOnlinePlayers().forEach(player -> event.getBlocks().forEach(block -> removeBlock(player, block.getLocation())));
 	}
 
 

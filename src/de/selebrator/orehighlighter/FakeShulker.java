@@ -46,24 +46,6 @@ public class FakeShulker {
 		PacketFetcher.sendPackets(this.observer, PacketFetcher.entityDestroy(this.entityId));
 	}
 
-	public void move(double x, double y, double z) {
-		if(Math.abs(x) >= 8 || Math.abs(y) >=8 || Math.abs(z) >= 8) {
-			System.out.println("Error in move input: difference cant be > 8");
-			return;
-		}
-
-		PacketFetcher.sendPackets(this.observer, PacketFetcher.relEntityMove(this.entityId, x, y, z));
-		this.location.add(x, y, z);
-	}
-
-	public void move(Location location) {
-		//make coordinates relative
-		double x = this.location.getX() - location.getX();
-		double y = this.location.getY() - location.getY();
-		double z = this.location.getZ() - location.getZ();
-		this.move(x, y, z);
-	}
-
 	public void setGlowColor(Glow.GlowingColor color) {
 		Glow.addTeamMember(this.observer, color, this.uuid.toString());
 	}
