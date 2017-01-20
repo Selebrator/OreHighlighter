@@ -134,7 +134,7 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 	}
 
 	private boolean addBlock(Player player, Location location, Material blockType) {
-		if(oreMap.containsKey(blockType)) {
+		if(oreMap.containsKey(blockType) && player.hasPermission(PERMISSION_PARENT + "see." + blockType)) {
 			FakeShulker shulker = new FakeShulker();
 			shulker.spawn(player, location);
 			shulker.setGlowColor(oreMap.get(blockType));

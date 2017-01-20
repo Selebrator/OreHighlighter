@@ -5,3 +5,16 @@ authors: [Selebrator]
 commands:
   ore:
     ussage: /ore [player]
+
+permissions:
+  ore.see.ores:
+    description: see all ores
+    children:
+      ore.see.coal_ore: true
+      ore.see.iron_ore: true
+      ore.see.gold_ore: true
+      ore.see.diamond_ore: true
+      ore.see.redstone_ore: true
+      ore.see.lapis_ore: true
+      ore.see.emerald_ore: true
+      ore.see.quartz_ore: true
