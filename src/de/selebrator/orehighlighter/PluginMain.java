@@ -9,6 +9,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -20,33 +21,39 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class PluginMain extends JavaPlugin implements Listener, CommandExecutor {
 
+	public static final String VERSION = "v1_12_R1";
 	private static final String PERMISSION_PARENT = "ore.";
-	public static final String VERSION = "v1_11_R1";
-
-	private static final Map<Material, Glow.GlowingColor> oreMap = new HashMap<>();
+	public int defaultRange;
+	public int minRange;
+	public int maxRange;
+	public int maxBlocks;
+	public Map<Material, Glow.GlowingColor> blockColorMap = new HashMap<>();
+	public List<Material> defaultBlockTypes;
 	private Map<Player, List<FakeShulker>> players = new HashMap<>();
 
-	static {
-		oreMap.put(Material.COAL_ORE, Glow.GlowingColor.DARK_GRAY);
-		oreMap.put(Material.IRON_ORE, Glow.GlowingColor.GRAY);
-		oreMap.put(Material.GOLD_ORE, Glow.GlowingColor.YELLOW);
-		oreMap.put(Material.DIAMOND_ORE, Glow.GlowingColor.AQUA);
-		oreMap.put(Material.REDSTONE_ORE, Glow.GlowingColor.DARK_RED);
-		oreMap.put(Material.GLOWING_REDSTONE_ORE, Glow.GlowingColor.DARK_RED);
-		oreMap.put(Material.LAPIS_ORE, Glow.GlowingColor.DARK_BLUE);
-		oreMap.put(Material.EMERALD_ORE, Glow.GlowingColor.DARK_GREEN);
-		oreMap.put(Material.QUARTZ_ORE, Glow.GlowingColor.WHITE);
+	private static boolean checkPermission(CommandSender sender, String permission) {
+		return checkPermission(sender, permission, "§cYou don't have the permission to perform this command.");
+	}
+
+	private static boolean checkPermission(CommandSender sender, String permission, String message) {
+		if(sender.hasPermission(permission))
+			return true;
+		else {
+			if(!message.equals(""))
+				sender.sendMessage(message);
+			return false;
+		}
 	}
 
 	@Override
 	public void onEnable() {
+		loadConfig();
+
 		if(!ServerPackage.getVersion().equals(VERSION)) {
 			this.getLogger().warning("Server version: " + ServerPackage.getVersion() + ", Recommended version: " + VERSION);
 			//Bukkit.getPluginManager().disablePlugin(this);
@@ -58,6 +65,29 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 		Bukkit.getOnlinePlayers().forEach(player -> this.players.put(player, new ArrayList<>()));
 	}
 
+	private void loadConfig() {
+		this.saveDefaultConfig();
+
+		this.defaultRange = this.getConfig().getInt("default_range");
+		this.minRange = this.getConfig().getInt("min_range");
+		this.maxRange = this.getConfig().getInt("max_range");
+		this.maxBlocks = this.getConfig().getInt("max_blocks");
+
+		ConfigurationSection colors = this.getConfig().getConfigurationSection("colors");
+		Map<String, Object> BlockColorPairs = colors.getValues(false);
+		for(String materialName : BlockColorPairs.keySet()) {
+			Material blockType = Material.getMaterial(materialName.toUpperCase());
+			char colorCode = ((String) BlockColorPairs.get(materialName)).charAt(1);
+			Glow.GlowingColor color = Glow.GlowingColor.BY_COLOR_CODE.get(colorCode);
+			this.blockColorMap.put(blockType, color);
+		}
+
+		this.defaultBlockTypes = this.getConfig().getStringList("default_blocks").stream()
+				.map(String::toUpperCase)
+				.map(Material::getMaterial)
+				.collect(Collectors.toList());
+	}
+
 	@Override
 	public void onDisable() {
 		Bukkit.getOnlinePlayers().forEach(this::undoSpelunking);
@@ -66,6 +96,8 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 		Player target = null;
+		int range = this.defaultRange;
+		List<Material> blockTypes = new ArrayList<>();
 
 		if(args.length == 0) {
 			if(!checkPermission(sender, PERMISSION_PARENT + "self"))
@@ -80,17 +112,25 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 				sender.sendMessage("§c/ore is not supported by this CommandSender");
 				return true;
 			}
-		} else if(args.length == 1) {
+		}
+		if(args.length >= 1) {
 			if(!checkPermission(sender, PERMISSION_PARENT + "other"))
 				return true;
 
 			target = Bukkit.getPlayer(args[0]);
 			if(target == null) {
-				sender.sendMessage("§cPlayer " + args[0].toLowerCase() + " not online");
+				sender.sendMessage("§cPlayer §r" + args[0].toLowerCase() + "§c not online");
 				return true;
 			}
-		} else if(args.length > 1) {
-			return false;
+		}
+		if(args.length >= 2) {
+			range = Integer.parseInt(args[1]);
+		}
+		if(args.length >= 3) {
+			blockTypes = Arrays.asList(args).subList(2, args.length).stream()
+					.map(String::toUpperCase)
+					.map(Material::getMaterial)
+					.collect(Collectors.toList());
 		}
 
 		if(target == null) {
@@ -98,12 +138,14 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 			return true;
 		}
 
-		if(this.players.get(target).equals(new ArrayList<>())) {
-			doSpelunking(target, 16);
+		range = Math.max(this.minRange, Math.min(range, this.maxRange));
+
+		if(this.players.get(target).isEmpty()) {
+			doSpelunking(target, range, blockTypes.isEmpty() ? defaultBlockTypes : blockTypes);
 			return true;
 		} else {
 			undoSpelunking(target);
-			return  true;
+			return true;
 		}
 	}
 
@@ -114,14 +156,18 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 		}
 	}
 
-	private void doSpelunking(Player player, int range) {
+	private void doSpelunking(Player player, int range, List<Material> blockTypes) {
 		this.initPlayer(player);
 		Block playerBlock = player.getLocation().getBlock();
 		for(int x = -range; x < range; x++) {
 			for(int y = -range; y < range; y++) {
 				for(int z = -range; z < range; z++) {
+					if(players.get(player).size() > this.maxBlocks)
+						return;
+
 					Block block = playerBlock.getRelative(x, y, z);
-					addBlock(player, block.getLocation(), block.getType());
+					if(blockTypes.contains(block.getType()))
+						addBlock(player, block.getLocation(), block.getType());
 				}
 			}
 		}
@@ -133,10 +179,10 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 	}
 
 	private boolean addBlock(Player player, Location location, Material blockType) {
-		if(oreMap.containsKey(blockType) && player.hasPermission(PERMISSION_PARENT + "see." + blockType)) {
+		if(blockColorMap.containsKey(blockType) && checkPermission(player, PERMISSION_PARENT + "see." + blockType, "")) {
 			FakeShulker shulker = new FakeShulker();
 			shulker.spawn(player, location);
-			shulker.setGlowColor(oreMap.get(blockType));
+			shulker.setGlowColor(blockColorMap.get(blockType));
 			this.players.get(player).add(shulker);
 			return true;
 		}
@@ -184,19 +230,5 @@ public class PluginMain extends JavaPlugin implements Listener, CommandExecutor 
 	public void onPistonPull(BlockPistonRetractEvent event) {
 		if(event.isSticky())
 			Bukkit.getOnlinePlayers().forEach(player -> event.getBlocks().forEach(block -> removeBlock(player, block.getLocation())));
-	}
-
-
-	private static boolean checkPermission(CommandSender sender, String permission) {
-		return checkPermission(sender, permission, "§cYou don't have the permission to perform this command.");
-	}
-
-	private static boolean checkPermission(CommandSender sender, String permission, String message) {
-		if(sender.hasPermission(permission))
-			return true;
-		else {
-			sender.sendMessage(message);
-			return false;
-		}
 	}
 }

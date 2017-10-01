@@ -1,11 +1,12 @@
 package de.selebrator.orehighlighter;
 
-import com.google.common.collect.Lists;
 import de.selebrator.orehighlighter.fetcher.PacketFetcher;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Glow {
 
@@ -17,7 +18,7 @@ public class Glow {
 	}
 
 	public static void addTeamMember(Player observer, GlowingColor color, String entityReference) { //entityReference = name for players and uuid for entities
-		Collection<String> modifiedEntities = Lists.newArrayList();
+		Collection<String> modifiedEntities = new ArrayList<>();
 		modifiedEntities.add(entityReference);
 		PacketFetcher.sendPackets(observer, PacketFetcher.scoreboardTeam(color, TEAM_TAG_VISIBILITY, COLLISION_RULE, modifiedEntities, ScoreboardTeamOperation.ADD_PLAYERS));
 	}
@@ -50,6 +51,13 @@ public class Glow {
 		public int id;
 		public char colorCode;
 		public String teamName;
+
+		public static final Map<Character, GlowingColor> BY_COLOR_CODE = new HashMap<>(17);
+
+		static {
+			for(GlowingColor glowingColor : GlowingColor.values())
+				BY_COLOR_CODE.put(glowingColor.colorCode, glowingColor);
+		}
 
 		GlowingColor(int id, char colorCode) {
 			this.id = id;
