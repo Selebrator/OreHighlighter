@@ -14,12 +14,12 @@ public enum ServerPackage {
 		this.name = source;
 	}
 
+	public static String getVersion() {
+		return Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
+	}
+
 	@Override
 	public String toString() {
 		return name;
-	}
-
-	public static String getVersion() {
-		return Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
 	}
 }
